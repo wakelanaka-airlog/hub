@@ -1,2 +1,11 @@
 # Mosquitto credentials - never commit
 mosquitto/config/password_file
+
+# Postgres/TimescaleDB credentials - never commit
+.env
+
+# Python (collector)
+collector/.venv/
+collector/**/__pycache__/
+collector/.pytest_cache/
+collector/*.egg-info/
