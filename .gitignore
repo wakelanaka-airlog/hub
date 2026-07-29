@@ -1,0 +1,2 @@
+# Mosquitto credentials - never commit
+mosquitto/config/password_file
