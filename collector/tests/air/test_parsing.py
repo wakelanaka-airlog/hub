@@ -3,8 +3,8 @@ import json
 import pytest
 
 from collector.errors import MeasurementParseError
-from collector.parsing import parse_air_measurement
-from collector.reading import Reading
+from collector.air.parsing import parse_air_measurement
+from collector.air.reading import AirReading
 
 
 def test_parse_air_measurement_parses_valid_payload():
@@ -20,7 +20,7 @@ def test_parse_air_measurement_parses_valid_payload():
 
     reading = parse_air_measurement(payload)
 
-    assert reading == Reading(
+    assert reading == AirReading(
         room="living_room",
         timestamp_unix_millis=1738156800000,
         co2_ppm=404,

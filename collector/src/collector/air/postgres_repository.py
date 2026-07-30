@@ -1,11 +1,11 @@
-from collector.reading import Reading
+from collector.air.reading import AirReading
 
 
-class PostgresReadingRepository:
+class PostgresAirReadingRepository:
     def __init__(self, connection):
         self._connection = connection
 
-    def save(self, reading: Reading) -> None:
+    def save(self, reading: AirReading) -> None:
         with self._connection.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO air_measurements (time, room, co2_ppm, temperature_celsius, humidity_percent) "

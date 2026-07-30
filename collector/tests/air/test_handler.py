@@ -1,10 +1,10 @@
 import json
 
-from collector.handler import handle_air_measurement
-from collector.reading import Reading
+from collector.air.handler import handle_air_measurement
+from collector.air.reading import AirReading
 
 
-class FakeReadingRepository:
+class FakeAirReadingRepository:
     def __init__(self):
         self.saved = []
 
@@ -13,7 +13,7 @@ class FakeReadingRepository:
 
 
 def test_handle_air_measurement_saves_valid_reading():
-    repository = FakeReadingRepository()
+    repository = FakeAirReadingRepository()
     payload = json.dumps(
         {
             "room": "living_room",
@@ -27,7 +27,7 @@ def test_handle_air_measurement_saves_valid_reading():
     handle_air_measurement(payload, repository)
 
     assert repository.saved == [
-        Reading(
+        AirReading(
             room="living_room",
             timestamp_unix_millis=1738156800000,
             co2_ppm=404,
@@ -38,7 +38,7 @@ def test_handle_air_measurement_saves_valid_reading():
 
 
 def test_handle_air_measurement_ignores_invalid_payload():
-    repository = FakeReadingRepository()
+    repository = FakeAirReadingRepository()
 
     handle_air_measurement(b"not valid json", repository)
 

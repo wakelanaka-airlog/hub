@@ -1,13 +1,13 @@
 import logging
 
 from collector.errors import MeasurementParseError
-from collector.parsing import parse_air_measurement
-from collector.repository import ReadingRepository
+from collector.air.parsing import parse_air_measurement
+from collector.air.repository import AirReadingRepository
 
 logger = logging.getLogger(__name__)
 
 
-def handle_air_measurement(payload: bytes, repository: ReadingRepository) -> None:
+def handle_air_measurement(payload: bytes, repository: AirReadingRepository) -> None:
     try:
         reading = parse_air_measurement(payload)
     except MeasurementParseError:

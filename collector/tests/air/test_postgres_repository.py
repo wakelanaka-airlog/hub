@@ -4,10 +4,10 @@ import psycopg2
 import pytest
 from testcontainers.community.postgres import PostgresContainer
 
-from collector.postgres_repository import PostgresReadingRepository
-from collector.reading import Reading
+from collector.air.postgres_repository import PostgresAirReadingRepository
+from collector.air.reading import AirReading
 
-INIT_SQL_PATH = Path(__file__).resolve().parents[2] / "timescaledb" / "init" / "001-measurements.sql"
+INIT_SQL_PATH = Path(__file__).resolve().parents[3] / "timescaledb" / "init" / "001-measurements.sql"
 
 
 def test_save_persists_reading():
@@ -17,8 +17,8 @@ def test_save_persists_reading():
             cursor.execute(INIT_SQL_PATH.read_text())
         connection.commit()
 
-        repository = PostgresReadingRepository(connection)
-        reading = Reading(
+        repository = PostgresAirReadingRepository(connection)
+        reading = AirReading(
             room="living_room",
             timestamp_unix_millis=1738156800000,
             co2_ppm=404,

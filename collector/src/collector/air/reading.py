@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class Reading:
+class AirReading:
     room: str
     timestamp_unix_millis: int
     co2_ppm: int

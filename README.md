@@ -24,7 +24,7 @@ prefix, so a compromised/misbehaving node still can't subscribe to
 anything or publish outside its own topic tree):
 
 ```sh
-docker run --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" \
+docker run -it --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" \
   eclipse-mosquitto:2 mosquitto_passwd -c /mosquitto/config/password_file air-nodes
 ```
 
@@ -35,7 +35,7 @@ same username/password in every node's `menuconfig` (`MQTT_USERNAME`/
 (see `acl.conf`):
 
 ```sh
-docker run --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" \
+docker run -it --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" \
   eclipse-mosquitto:2 mosquitto_passwd /mosquitto/config/password_file collector
 ```
 
