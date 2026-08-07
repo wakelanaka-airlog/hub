@@ -13,4 +13,8 @@ def handle_air_measurement(payload: bytes, repository: AirReadingRepository) -> 
     except MeasurementParseError:
         logger.exception("Discarding unparseable air-node measurement")
         return
-    repository.save(reading)
+
+    try:
+        repository.save(reading)
+    except Exception:
+        logger.exception("Discarding air-node measurement: repository save failed")

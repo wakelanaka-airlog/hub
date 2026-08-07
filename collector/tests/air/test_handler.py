@@ -12,6 +12,11 @@ class FakeAirReadingRepository:
         self.saved.append(reading)
 
 
+class FailingAirReadingRepository:
+    def save(self, reading):
+        raise RuntimeError("simulated repository failure")
+
+
 def test_handle_air_measurement_saves_valid_reading():
     repository = FakeAirReadingRepository()
     payload = json.dumps(
@@ -43,3 +48,17 @@ def test_handle_air_measurement_ignores_invalid_payload():
     handle_air_measurement(b"not valid json", repository)
 
     assert repository.saved == []
+
+
+def test_handle_air_measurement_does_not_propagate_repository_errors():
+    payload = json.dumps(
+        {
+            "room": "living_room",
+            "timestamp": 1738156800000,
+            "co2Ppm": 404,
+            "temperatureCelsius": 25.0,
+            "humidityPercent": 50.0,
+        }
+    ).encode()
+
+    handle_air_measurement(payload, FailingAirReadingRepository())

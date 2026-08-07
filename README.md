@@ -1,7 +1,7 @@
 # hub
 
 The server side of wakelanaka-airlog: everything that runs on the NAS and
-receives data from the sensor nodes (see the `node` repo). Deployed via
+receives data from the sensor nodes (see the `air-node` repo). Deployed via
 Docker Compose.
 
 Currently the MQTT broker (Mosquitto) and the PostgreSQL/TimescaleDB

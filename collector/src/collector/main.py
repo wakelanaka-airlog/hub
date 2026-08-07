@@ -11,6 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 AIR_NODE_MEASUREMENT_TOPIC = "wakelanaka-airlog/air-node/+/measurement"
+MQTT_CLIENT_ID = "wakelanaka-airlog-collector"
 
 
 def build_air_node_on_connect(repository):
@@ -19,7 +20,7 @@ def build_air_node_on_connect(repository):
 
     def on_connect(client, userdata, connect_flags, reason_code, properties=None):
         logger.info("Subscribing to %s", AIR_NODE_MEASUREMENT_TOPIC)
-        client.subscribe(AIR_NODE_MEASUREMENT_TOPIC)
+        client.subscribe(AIR_NODE_MEASUREMENT_TOPIC, qos=1)
         client.message_callback_add(AIR_NODE_MEASUREMENT_TOPIC, on_air_message)
 
     return on_connect
@@ -44,7 +45,11 @@ def main() -> None:
         for node_family_on_connect in node_family_on_connects:
             node_family_on_connect(client, userdata, connect_flags, reason_code, properties)
 
-    client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+    client = mqtt.Client(
+        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+        client_id=MQTT_CLIENT_ID,
+        clean_session=False,
+    )
     client.username_pw_set(os.environ["MQTT_USERNAME"], os.environ["MQTT_PASSWORD"])
     client.on_connect = on_connect
 

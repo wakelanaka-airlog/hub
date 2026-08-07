@@ -9,3 +9,5 @@ collector/.venv/
 collector/**/__pycache__/
 collector/.pytest_cache/
 collector/*.egg-info/
+
+CLAUDE.md

@@ -1,6 +1,10 @@
 import json
 from dataclasses import dataclass
+from unittest.mock import patch
 
+import paho.mqtt.client as mqtt
+
+import collector.main as main
 from collector.air.reading import AirReading
 from collector.main import AIR_NODE_MEASUREMENT_TOPIC, build_air_node_on_connect
 
@@ -18,8 +22,8 @@ class FakeClient:
         self.subscribed_topics = []
         self.message_callbacks = {}
 
-    def subscribe(self, topic):
-        self.subscribed_topics.append(topic)
+    def subscribe(self, topic, qos=0):
+        self.subscribed_topics.append((topic, qos))
 
     def message_callback_add(self, topic, callback):
         self.message_callbacks[topic] = callback
@@ -49,7 +53,7 @@ def test_air_node_on_connect_subscribes_to_the_measurement_wildcard():
 
     on_connect(client, userdata=None, connect_flags=None, reason_code=0)
 
-    assert client.subscribed_topics == [AIR_NODE_MEASUREMENT_TOPIC]
+    assert client.subscribed_topics == [(AIR_NODE_MEASUREMENT_TOPIC, 1)]
 
 
 def test_air_node_on_connect_registers_a_message_callback_for_the_wildcard():
@@ -120,3 +124,23 @@ def test_air_message_callback_ignores_invalid_payload():
     )
 
     assert repository.saved == []
+
+
+def test_main_connects_with_a_persistent_mqtt_session(monkeypatch):
+    monkeypatch.setenv("POSTGRES_HOST", "db-host")
+    monkeypatch.setenv("POSTGRES_USER", "user")
+    monkeypatch.setenv("POSTGRES_PASSWORD", "pass")
+    monkeypatch.setenv("POSTGRES_DB", "airlog")
+    monkeypatch.setenv("MQTT_BROKER_HOST", "broker-host")
+    monkeypatch.setenv("MQTT_BROKER_PORT", "1883")
+    monkeypatch.setenv("MQTT_USERNAME", "collector")
+    monkeypatch.setenv("MQTT_PASSWORD", "pass")
+
+    with patch("collector.main.psycopg2.connect"), patch("collector.main.mqtt.Client") as mock_client_cls:
+        main.main()
+
+    mock_client_cls.assert_called_once_with(
+        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+        client_id=main.MQTT_CLIENT_ID,
+        clean_session=False,
+    )
