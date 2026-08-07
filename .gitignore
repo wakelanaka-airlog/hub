@@ -10,4 +10,10 @@ collector/**/__pycache__/
 collector/.pytest_cache/
 collector/*.egg-info/
 
+# Python (restapi)
+restapi/.venv/
+restapi/**/__pycache__/
+restapi/.pytest_cache/
+restapi/*.egg-info/
+
 CLAUDE.md

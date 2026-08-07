@@ -4,14 +4,14 @@ The server side of wakelanaka-airlog: everything that runs on the NAS and
 receives data from the sensor nodes (see the `air-node` repo). Deployed via
 Docker Compose.
 
-Currently the MQTT broker (Mosquitto) and the PostgreSQL/TimescaleDB
-database; the collector-App and REST API will be added here as services
-once built.
+Currently the MQTT broker (Mosquitto), the PostgreSQL/TimescaleDB database,
+the collector service and the REST API.
 
 ## Setup
 
 Copy `.env.example` to `.env` and fill in real values (not committed - see
-`.gitignore`). This holds the TimescaleDB credentials:
+`.gitignore`). This holds the TimescaleDB credentials, the read-only
+`restapi` database role's credentials, and the REST API's shared secret:
 
 ```sh
 cp .env.example .env
@@ -69,5 +69,27 @@ password from the password file above - anonymous connections are
 rejected, and `acl.conf` further restricts what each account can do.
 
 TimescaleDB listens on port 5432, with credentials from `.env`. The schema
-(`air_measurements` hypertable) is created automatically on first startup
-from `timescaledb/init/`.
+(`air_measurements` hypertable) and the read-only `restapi` role (from
+`RESTAPI_DB_USER`/`RESTAPI_DB_PASSWORD`) are created automatically on first
+startup from `timescaledb/init/`. If the database volume already existed
+before adding `002-restapi-role.sh` (init scripts only run once, against an
+empty volume), apply it by hand instead of recreating the volume:
+
+```sh
+docker compose exec timescaledb bash /docker-entrypoint-initdb.d/002-restapi-role.sh
+```
+
+(`RESTAPI_DB_USER`/`RESTAPI_DB_PASSWORD` are already in the running
+container's environment - set via `environment:` in `docker-compose.yml`
+from `.env` - so no need to pass them again.)
+
+The REST API listens on port 8000 and serves the latest and historical
+`air_measurements` readings to the Qt6 dashboard. Every route except
+`/health` requires the `RESTAPI_API_KEY` value from `.env` as an `X-API-Key`
+header:
+
+```sh
+curl -H "X-API-Key: $RESTAPI_API_KEY" http://localhost:8000/rooms/latest
+```
+
+See `restapi/` for the full route list.
