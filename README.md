@@ -42,6 +42,19 @@ docker run -it --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" \
 Set this username/password in the collector's own `.env` (`MQTT_USERNAME`/
 `MQTT_PASSWORD`).
 
+Add a `dashboard` account the same way - it's read-only, scoped to
+`wakelanaka-airlog/air-node/#` only (see `acl.conf`), for the Qt6 dashboard's
+per-station "online" check (subscribes to see which rooms are actively
+publishing; see `dashboard/CLAUDE.md`):
+
+```sh
+docker run -it --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" \
+  eclipse-mosquitto:2 mosquitto_passwd /mosquitto/config/password_file dashboard
+```
+
+Set this username/password in the dashboard's own `.env` (`MQTT_USERNAME`/
+`MQTT_PASSWORD`).
+
 `mosquitto_passwd` (run via a throwaway root container above) leaves
 `password_file` owned by `root` with `600` permissions, which the broker's
 internal unprivileged `mosquitto` user can't read - fix this after
