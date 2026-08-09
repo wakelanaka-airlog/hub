@@ -6,15 +6,12 @@ import pytest
 from psycopg2.pool import ThreadedConnectionPool
 from testcontainers.community.postgres import PostgresContainer
 
-from restapi.air.postgres_repository import COARSE_HISTORY_RANGE_THRESHOLD, PostgresAirReadingRepository
+from restapi.air.postgres_repository import PostgresAirReadingRepository
 
 TIMESCALEDB_INIT_DIR = Path(__file__).resolve().parents[3] / "timescaledb" / "init"
 
 
 def _apply_sql_migrations(connection) -> None:
-    # timescaledb.continuous DDL (in 003) can't run as part of a
-    # multi-statement transaction block, so each statement needs its own
-    # execute() call with autocommit on - see hub/CLAUDE.md.
     connection.autocommit = True
     with connection.cursor() as cursor:
         for sql_file in ("001-measurements.sql", "003-air-measurements-continuous-aggregate.sql"):
@@ -110,7 +107,7 @@ def test_history_excludes_readings_outside_the_range(repository):
     assert [reading.co2_ppm for reading in readings] == [600]
 
 
-def test_history_uses_raw_readings_when_the_range_is_exactly_the_threshold():
+def test_history_averages_readings_that_land_in_the_same_bucket():
     with PostgresContainer("timescale/timescaledb:latest-pg16", driver=None) as postgres:
         connection = psycopg2.connect(postgres.get_connection_url())
         _apply_sql_migrations(connection)
@@ -123,30 +120,7 @@ def test_history_uses_raw_readings_when_the_range_is_exactly_the_threshold():
         try:
             repository = PostgresAirReadingRepository(pool)
             readings = repository.history(
-                "living_room", start=first, end=first + COARSE_HISTORY_RANGE_THRESHOLD, limit=1000
-            )
-        finally:
-            pool.closeall()
-
-        assert [reading.co2_ppm for reading in readings] == [500, 540]
-
-
-def test_history_averages_readings_from_the_continuous_aggregate_beyond_the_threshold():
-    with PostgresContainer("timescale/timescaledb:latest-pg16", driver=None) as postgres:
-        connection = psycopg2.connect(postgres.get_connection_url())
-        _apply_sql_migrations(connection)
-        bucket = datetime(2026, 1, 1, 8, 0, tzinfo=timezone.utc)
-        _seed(connection, "living_room", bucket, 500, 20.0, 40.0)
-        _seed(connection, "living_room", bucket + timedelta(minutes=5), 540, 21.0, 42.0)
-
-        pool = ThreadedConnectionPool(1, 5, postgres.get_connection_url())
-        try:
-            repository = PostgresAirReadingRepository(pool)
-            readings = repository.history(
-                "living_room",
-                start=bucket - timedelta(hours=1),
-                end=bucket + COARSE_HISTORY_RANGE_THRESHOLD + timedelta(hours=1),
-                limit=1000,
+                "living_room", start=first - timedelta(days=10), end=first + timedelta(days=10), limit=1000
             )
         finally:
             pool.closeall()
@@ -157,12 +131,12 @@ def test_history_averages_readings_from_the_continuous_aggregate_beyond_the_thre
         assert readings[0].humidity_percent == pytest.approx(41.0)
 
 
-def test_history_respects_the_limit_when_using_the_continuous_aggregate():
+def test_history_respects_the_limit_across_buckets():
     with PostgresContainer("timescale/timescaledb:latest-pg16", driver=None) as postgres:
         connection = psycopg2.connect(postgres.get_connection_url())
         _apply_sql_migrations(connection)
         first_bucket = datetime(2026, 1, 1, 8, 0, tzinfo=timezone.utc)
-        second_bucket = first_bucket + timedelta(minutes=15)
+        second_bucket = first_bucket + timedelta(hours=1)
         _seed(connection, "living_room", first_bucket, 500, 20.0, 40.0)
         _seed(connection, "living_room", second_bucket, 600, 22.0, 44.0)
 
@@ -171,8 +145,8 @@ def test_history_respects_the_limit_when_using_the_continuous_aggregate():
             repository = PostgresAirReadingRepository(pool)
             readings = repository.history(
                 "living_room",
-                start=first_bucket - timedelta(hours=1),
-                end=first_bucket + COARSE_HISTORY_RANGE_THRESHOLD + timedelta(hours=1),
+                start=first_bucket - timedelta(hours=24),
+                end=first_bucket + timedelta(hours=24),
                 limit=1,
             )
         finally:
