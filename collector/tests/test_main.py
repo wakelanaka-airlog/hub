@@ -35,10 +35,9 @@ class FakeMessage:
     payload: bytes
 
 
-def _measurement_payload(room: str) -> bytes:
+def _measurement_payload() -> bytes:
     return json.dumps(
         {
-            "room": room,
             "timestamp": 1738156800000,
             "co2Ppm": 404,
             "temperatureCelsius": 25.0,
@@ -77,7 +76,7 @@ def test_air_message_callback_handles_any_room_matching_the_wildcard():
         userdata=None,
         message=FakeMessage(
             topic="wakelanaka-airlog/air-node/living_room/measurement",
-            payload=_measurement_payload("living_room"),
+            payload=_measurement_payload(),
         ),
     )
     on_air_message(
@@ -85,7 +84,7 @@ def test_air_message_callback_handles_any_room_matching_the_wildcard():
         userdata=None,
         message=FakeMessage(
             topic="wakelanaka-airlog/air-node/bedroom/measurement",
-            payload=_measurement_payload("bedroom"),
+            payload=_measurement_payload(),
         ),
     )
 

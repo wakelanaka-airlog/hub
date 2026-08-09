@@ -16,7 +16,7 @@ MQTT_CLIENT_ID = "wakelanaka-airlog-collector"
 
 def build_air_node_on_connect(repository):
     def on_air_message(client, userdata, message):
-        handle_air_measurement(message.payload, repository)
+        handle_air_measurement(message.topic, message.payload, repository)
 
     def on_connect(client, userdata, connect_flags, reason_code, properties=None):
         logger.info("Subscribing to %s", AIR_NODE_MEASUREMENT_TOPIC)

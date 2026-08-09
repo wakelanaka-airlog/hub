@@ -7,9 +7,9 @@ from collector.air.repository import AirReadingRepository
 logger = logging.getLogger(__name__)
 
 
-def handle_air_measurement(payload: bytes, repository: AirReadingRepository) -> None:
+def handle_air_measurement(topic: str, payload: bytes, repository: AirReadingRepository) -> None:
     try:
-        reading = parse_air_measurement(payload)
+        reading = parse_air_measurement(topic, payload)
     except MeasurementParseError:
         logger.exception("Discarding unparseable air-node measurement")
         return

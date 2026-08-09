@@ -3,6 +3,8 @@ import json
 from collector.air.handler import handle_air_measurement
 from collector.air.reading import AirReading
 
+TOPIC = "wakelanaka-airlog/air-node/living_room/measurement"
+
 
 class FakeAirReadingRepository:
     def __init__(self):
@@ -21,7 +23,6 @@ def test_handle_air_measurement_saves_valid_reading():
     repository = FakeAirReadingRepository()
     payload = json.dumps(
         {
-            "room": "living_room",
             "timestamp": 1738156800000,
             "co2Ppm": 404,
             "temperatureCelsius": 25.0,
@@ -29,7 +30,7 @@ def test_handle_air_measurement_saves_valid_reading():
         }
     ).encode()
 
-    handle_air_measurement(payload, repository)
+    handle_air_measurement(TOPIC, payload, repository)
 
     assert repository.saved == [
         AirReading(
@@ -45,7 +46,7 @@ def test_handle_air_measurement_saves_valid_reading():
 def test_handle_air_measurement_ignores_invalid_payload():
     repository = FakeAirReadingRepository()
 
-    handle_air_measurement(b"not valid json", repository)
+    handle_air_measurement(TOPIC, b"not valid json", repository)
 
     assert repository.saved == []
 
@@ -53,7 +54,6 @@ def test_handle_air_measurement_ignores_invalid_payload():
 def test_handle_air_measurement_does_not_propagate_repository_errors():
     payload = json.dumps(
         {
-            "room": "living_room",
             "timestamp": 1738156800000,
             "co2Ppm": 404,
             "temperatureCelsius": 25.0,
@@ -61,4 +61,4 @@ def test_handle_air_measurement_does_not_propagate_repository_errors():
         }
     ).encode()
 
-    handle_air_measurement(payload, FailingAirReadingRepository())
+    handle_air_measurement(TOPIC, payload, FailingAirReadingRepository())

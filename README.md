@@ -83,6 +83,25 @@ docker compose exec timescaledb bash /docker-entrypoint-initdb.d/002-restapi-rol
 container's environment - set via `environment:` in `docker-compose.yml`
 from `.env` - so no need to pass them again.)
 
+Same story for `003-air-measurements-continuous-aggregate.sql` (compression
+policy + the `air_measurements_15min` continuous aggregate) if your volume
+predates it:
+
+```sh
+docker compose exec -T timescaledb psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -f /docker-entrypoint-initdb.d/003-air-measurements-continuous-aggregate.sql
+```
+
+Same for `004-air-measurements-unique-room-time.sql` (makes the collector's
+insert idempotent against redelivered readings) - **note this one will fail
+if `air_measurements` already has duplicate `(room, time)` rows**; resolve
+those first (e.g. keep one row per duplicate set) before applying it:
+
+```sh
+docker compose exec -T timescaledb psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -f /docker-entrypoint-initdb.d/004-air-measurements-unique-room-time.sql
+```
+
 The REST API listens on port 8000 and serves the latest and historical
 `air_measurements` readings to the Qt6 dashboard. Every route except
 `/health` requires the `RESTAPI_API_KEY` value from `.env` as an `X-API-Key`

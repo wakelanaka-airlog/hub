@@ -21,10 +21,9 @@ class FakeAirReadingRepository:
         return self._reading_added.wait(timeout)
 
 
-def _measurement_payload(room: str) -> str:
+def _measurement_payload() -> str:
     return json.dumps(
         {
-            "room": room,
             "timestamp": 1738156800000,
             "co2Ppm": 404,
             "temperatureCelsius": 25.0,
@@ -53,11 +52,11 @@ def test_air_node_wiring_only_processes_messages_matching_the_measurement_wildca
 
             mosquitto.publish_message(
                 "wakelanaka-airlog/invalid/measurement",
-                _measurement_payload("should_not_be_saved"),
+                _measurement_payload(),
             )
             mosquitto.publish_message(
                 "wakelanaka-airlog/air-node/living_room/measurement",
-                _measurement_payload("living_room"),
+                _measurement_payload(),
             )
 
             assert repository.wait_for_a_reading(timeout=5), "no reading was saved"
