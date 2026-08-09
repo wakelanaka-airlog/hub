@@ -14,6 +14,7 @@ services:
     image: timescale/timescaledb:latest-pg16
     container_name: hub-timescaledb
     restart: unless-stopped
+    command: -c timezone=Europe/Zurich
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
