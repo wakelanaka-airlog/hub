@@ -13,7 +13,6 @@ TIMESCALEDB_INIT_DIR = Path(__file__).resolve().parents[3] / "timescaledb" / "in
 def _apply_sql_migrations(connection) -> None:
     with connection.cursor() as cursor:
         cursor.execute((TIMESCALEDB_INIT_DIR / "001-measurements.sql").read_text())
-        cursor.execute((TIMESCALEDB_INIT_DIR / "004-air-measurements-unique-room-time.sql").read_text())
     connection.commit()
 
 
@@ -102,6 +101,42 @@ def test_save_ignores_a_redelivered_reading_with_the_same_room_and_time():
             (count,) = cursor.fetchone()
 
         assert count == 1
+
+
+@pytest.mark.parametrize(
+    "field, out_of_range_value",
+    [
+        ("co2_ppm", -1),
+        ("co2_ppm", 40001),
+        ("temperature_celsius", -10.1),
+        ("temperature_celsius", 60.1),
+        ("humidity_percent", -0.1),
+        ("humidity_percent", 100.1),
+    ],
+)
+def test_save_rejects_a_reading_outside_the_scd41s_sensor_range(field, out_of_range_value):
+    with PostgresContainer("timescale/timescaledb:latest-pg16", driver=None) as postgres:
+        connection = psycopg2.connect(postgres.get_connection_url())
+        _apply_sql_migrations(connection)
+
+        repository = PostgresAirReadingRepository(connection)
+        reading_fields = dict(
+            room="living_room",
+            timestamp_unix_millis=1738156800000,
+            co2_ppm=404,
+            temperature_celsius=25.0,
+            humidity_percent=50.0,
+        )
+        reading_fields[field] = out_of_range_value
+
+        with pytest.raises(Exception):
+            repository.save(AirReading(**reading_fields))
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT count(*) FROM air_measurements")
+            (count,) = cursor.fetchone()
+
+        assert count == 0
 
 
 def test_save_does_not_ignore_a_different_room_at_the_same_time():

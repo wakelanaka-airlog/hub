@@ -12,13 +12,9 @@ TIMESCALEDB_INIT_DIR = Path(__file__).resolve().parents[3] / "timescaledb" / "in
 
 
 def _apply_sql_migrations(connection) -> None:
-    connection.autocommit = True
     with connection.cursor() as cursor:
-        for sql_file in ("001-measurements.sql", "003-air-measurements-continuous-aggregate.sql"):
-            for statement in (TIMESCALEDB_INIT_DIR / sql_file).read_text().split(";"):
-                if statement.strip():
-                    cursor.execute(statement)
-    connection.autocommit = False
+        cursor.execute((TIMESCALEDB_INIT_DIR / "001-measurements.sql").read_text())
+    connection.commit()
 
 
 def _seed(connection, room: str, time: datetime, co2_ppm: int, temperature_celsius: float, humidity_percent: float) -> None:
