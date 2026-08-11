@@ -1,8 +1,4 @@
 #!/bin/bash
-# Creates a read-only Postgres role for the restapi service, mirroring the
-# separate publish-only/read-only account split already used for MQTT (see
-# hub/mosquitto/config/acl.conf) - a compromised/misbehaving restapi
-# deployment still can't write or alter data.
 set -euo pipefail
 
 : "${RESTAPI_DB_USER:?RESTAPI_DB_USER must be set}"

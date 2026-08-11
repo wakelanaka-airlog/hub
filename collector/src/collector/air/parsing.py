@@ -18,9 +18,6 @@ def parse_air_measurement(topic: str, payload: bytes) -> AirReading:
 
 
 def _room_from_topic(topic: str) -> str:
-    # Expected shape: wakelanaka-airlog/air-node/<room>/measurement - room is
-    # the wildcard segment the collector's subscription (air-node/+/measurement)
-    # matches on, not part of the JSON payload.
     parts = topic.split("/")
     if len(parts) != 4:
         raise MeasurementParseError(f"unexpected topic shape: {topic!r}")
